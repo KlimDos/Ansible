@@ -1,5 +1,30 @@
 ---
+- name: Welcome message
 # tasks file for jenkins
-- name: update system
   debug: 
     msg: "Hello, World"
+#- name: update system
+#  become: True
+#  yum: 
+#   name: "*"
+#   state: latest
+
+- name: Install soft required
+  become: true
+  yum:
+   update_cache: true
+   name: "{{ packages }}"
+   state: latest
+  vars:
+   packages:
+    - nano
+    - wget
+    - curl
+    - zip
+    - unzip
+    - git
+- name: Set up git
+  become: true
+  git_config:
+   name: user.email
+   value: jenkins
