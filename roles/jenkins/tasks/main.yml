@@ -1,0 +1,32 @@
+---
+#  - name: Check if Python is in the configured location
+#    raw: test -e {{ ansible_python_interpreter }}
+#    ignore_errors: true
+#    register: python_check
+#   when: ansible_python_interpreter is defined
+#
+#  - name: Fail if configured Python is unavailable
+#    fail:
+#     msg: "Python is not accessible at {{ ansible_python_interpreter }} on this host! Please set the inventory variable 'ansible_python_interpreter' to the location of the Python 2.7 binary."
+#    when: ansible_python_interpreter is defined and python_check.rc == 1
+#
+#  - name: Check if Python is in the default location
+#    raw: test -e /usr/bin/python
+#    ignore_errors: true
+#    register: python_check
+#    when: ansible_python_interpreter is undefined
+#
+#  - name: Fail if default Python is unavailable
+#    fail:
+#      msg: Python is not accessible at /usr/bin/python on this host! Please set the inventory variable 'ansible_python_interpreter' to the location of the Python 2.7 binary.
+#    when: ansible_python_interpreter is undefined and python_check.rc == 1
+#
+#  - name: Fail if Python is the wrong version
+#    fail:
+#      msg: "The Python binary at {{ ansible_python.executable }} is version {{ ansible_python_version }}! Please set the inventory variable 'ansible_python_interpreter' to the location of the Python 2.7 binary."
+#    when: ansible_python.version.major != 2 or ansible_python.version.minor != 7
+      
+# tasks file for jenkins
+  - name: update system
+    debug: 
+      msg: "Hello, World"
