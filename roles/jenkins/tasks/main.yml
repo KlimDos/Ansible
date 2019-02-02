@@ -95,7 +95,7 @@
 
 - name: Jenkins install (add repo)
   become: true
-  tags: test
+  #tags: test
   get_url: 
    url: "https://pkg.jenkins.io/redhat/jenkins.repo"
    dest: "/etc/yum.repos.d/jenkins.repo"
@@ -103,7 +103,7 @@
 
 - name: Jenkins install (add rpm key)
   become: true
-  tags: test
+  #tags: 
   rpm_key:
     state: present
     key: https://pkg.jenkins.io/redhat/jenkins.io.key
@@ -111,7 +111,7 @@
 
 - name: Jenkins install (install via yum)
   become: true
-  tags: test
+  #tags: 
   yum:
    update_cache: true
    name: "{{ packages }}"
@@ -121,9 +121,23 @@
     - jenkins
 
 - name: Jenkins install (enable and start service)
-  tags: test
+  #tags: 
   become: true
   systemd:
    enabled: yes
    state: started
    name: jenkins
+
+- name: Jenkins install (show passwd)
+  become: true
+  tags: test
+  command: /bin/cat /var/lib/jenkins/secrets/initialAdminPassword
+  retries: 5
+  delay: 3
+  register: pwd
+  until: pwd.rc == 0
+  
+
+- debug: 
+   var: pwd.stdout
+  tags: test
