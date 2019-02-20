@@ -1,0 +1,7 @@
+---
+- name: test connection
+  debug:
+   msg: "test role and connection"
+
+- name: ping
+  ping:  

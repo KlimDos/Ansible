@@ -1,0 +1,21 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  roles:
+    - {role: 'users'}
+    #- {role: 'test'}
+  vars:
+   cloud: "nonprod"
+   env: "wdev"
+   srv_user: "wpadata"
+
+
+   ansible_user: "sshtest"
+   ansible_ssh_pass: "abc123"
+   #ansible_sudo_pass: "abc123"
+
+
+#export ANSIBLE_ROLES_PATH="/home/sasha/Desktop/git_projects/do-cmh/playbooks/roles"
+#export ANSIBLE_ROLES_PATH="/home/sasha/Desktop/git_projects/my_ansible_stuff/roles"
+#ansible-playbook play.yml -i hosts -l "test" -t ad-hoc --check
