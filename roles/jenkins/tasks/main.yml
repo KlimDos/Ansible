@@ -1,32 +1,143 @@
 ---
-#  - name: Check if Python is in the configured location
-#    raw: test -e {{ ansible_python_interpreter }}
-#    ignore_errors: true
-#    register: python_check
-#   when: ansible_python_interpreter is defined
-#
-#  - name: Fail if configured Python is unavailable
-#    fail:
-#     msg: "Python is not accessible at {{ ansible_python_interpreter }} on this host! Please set the inventory variable 'ansible_python_interpreter' to the location of the Python 2.7 binary."
-#    when: ansible_python_interpreter is defined and python_check.rc == 1
-#
-#  - name: Check if Python is in the default location
-#    raw: test -e /usr/bin/python
-#    ignore_errors: true
-#    register: python_check
-#    when: ansible_python_interpreter is undefined
-#
-#  - name: Fail if default Python is unavailable
-#    fail:
-#      msg: Python is not accessible at /usr/bin/python on this host! Please set the inventory variable 'ansible_python_interpreter' to the location of the Python 2.7 binary.
-#    when: ansible_python_interpreter is undefined and python_check.rc == 1
-#
-#  - name: Fail if Python is the wrong version
-#    fail:
-#      msg: "The Python binary at {{ ansible_python.executable }} is version {{ ansible_python_version }}! Please set the inventory variable 'ansible_python_interpreter' to the location of the Python 2.7 binary."
-#    when: ansible_python.version.major != 2 or ansible_python.version.minor != 7
-      
+- name: Welcome message
 # tasks file for jenkins
-  - name: update system
-    debug: 
-      msg: "Hello, World"
+  debug: 
+    msg: "Hello, World"
+#- name: update system
+#  become: True
+#  yum: 
+#   name: "*"
+#   state: latest
+
+- name: create base dirs
+  become: true
+  file:
+    dest: "{{ item }}"
+    state: directory
+    mode: 0755
+  with_items:
+  - /opt/software/download
+  - /opt/logs
+
+- name: Install soft required
+  become: true
+  yum:
+   update_cache: true
+   name: "{{ packages }}"
+   state: latest
+  vars:
+   packages:
+    - nano
+    - wget
+    - curl
+    - zip
+    - unzip
+    - git
+
+- git_config: scope=global name=user.name value="jenkins"
+- git_config: scope=global name=user.email value="klimdos@gmail.com"
+
+- name: Install OpenJDK
+  become: true
+  yum:
+   name: "{{ packages }}"
+   state: latest
+  vars:
+   packages:
+   - java-1.8.0-openjdk-devel
+   #- openjdk-8-jdk-headless
+
+#- name: Maven install (download tar)
+ # get_url:
+ #  url: "http://mirror.linux-ia64.org/apache/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.tar.gz"
+ #  dest: /tmp
+- name: Maven install (unzip)
+  become: true
+  unarchive:
+   src: "http://mirror.linux-ia64.org/apache/maven/maven-3/3.6.0/binaries/apache-maven-3.6.0-bin.tar.gz"
+   dest: /opt/software/download
+   remote_src: yes
+   keep_newer: true   
+
+- name: Maven install (change permission)
+  become: true
+  file:
+    path: /opt/software/download/apache-maven-3.6.0
+    owner: root
+    group: root
+    # when specifying mode using octal numbers, add a leading 0
+    mode: 0755
+
+#- name: Maven install (create simlink)
+#  file:
+#   src: "/opt/software/download/apache-maven-3.6.0"
+#   dest: "maven"
+#   state: link
+- name: Maven install (update .bashrc) 
+  lineinfile:
+    dest: /home/centos/.bashrc
+    line: "{{ item }}"
+    backup: yes
+  with_items:
+  - 'export MAVEN_HOME=/opt/software/download/apache-maven-3.6.0'
+  - 'export PATH="${PATH}:${MAVEN_HOME}/bin"'
+
+#- name: Jenkins install (add repo)
+#  tags: test
+#  become: true
+#  yum_repository:
+#   name: jenkins
+#   description: Jenkins repo
+#   file: jenkins
+#   baseurl: http://pkg.jenkins-ci.org/redhat/jenkins.repo
+#   state: present
+
+
+- name: Jenkins install (add repo)
+  become: true
+  #tags: test
+  get_url: 
+   url: "https://pkg.jenkins.io/redhat/jenkins.repo"
+   dest: "/etc/yum.repos.d/jenkins.repo"
+  
+
+- name: Jenkins install (add rpm key)
+  become: true
+  #tags: 
+  rpm_key:
+    state: present
+    key: https://pkg.jenkins.io/redhat/jenkins.io.key
+
+
+- name: Jenkins install (install via yum)
+  become: true
+  #tags: 
+  yum:
+   update_cache: true
+   name: "{{ packages }}"
+   state: latest
+  vars:
+   packages:
+    - jenkins
+
+- name: Jenkins install (enable and start service)
+  #tags: 
+  become: true
+  systemd:
+   enabled: yes
+   state: started
+   name: jenkins
+
+- name: Jenkins install (show passwd)
+  become: true
+  tags: test
+  command: /bin/cat /var/lib/jenkins/secrets/initialAdminPassword
+  retries: 5
+  delay: 3
+  register: pwd
+  until: pwd.rc == 0
+  
+
+- debug: 
+   var: pwd.stdout
+  tags: test
